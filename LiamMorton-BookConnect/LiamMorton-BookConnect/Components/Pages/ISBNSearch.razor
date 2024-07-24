@@ -1,0 +1,101 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject TitleApiClient _TitleApi
+@inject IHttpClientFactory _ClientFactory
+<h3>ISBNSearch</h3>
+<!--Get user input-->
+<label for="fname">isbn:</label>
+<input type="text" id="isbn" name="isbn" @bind="isbn">
+<button @onclick="SearchIsbn">Search</button>
+
+<!--display data-->
+@if (titles != null)
+{
+    <h1>@titles.Title</h1>
+    <h3>@titles.Subtitle</h3>
+    <p>
+        By: @authorsFormated
+        &emsp;&emsp;&emsp;$@titles.Price
+    </p>
+    <p style="padding-left: 30em">@titles.Description</p>
+    <img src=@titles.CoverImage asp-append-version="true" width="300em" alt="No Cover Found"/>
+    <p>Subject: @titles.Subject</p>
+    
+
+
+    <!-- this is a table version I used but i like the other version more 
+        <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Title</th>
+                <th>Subtitle</th>
+                <th>CoverImage</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Auther</th>
+                <th>Subject</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@titles.Title</td>
+                <td>@titles.Subtitle</td>
+                <td>@titles.CoverImage</td>
+                <td>@titles.Price</td>
+                <td>@titles.Description</td>
+                <td>
+                    @foreach (var auther in @titles.Authors)
+                    {
+                        @auther
+                    }
+                </td>
+                <td>@titles.Subject</td>
+            </tr>
+        </tbody>
+
+    </table>-->
+}
+else if (noData)
+{
+    <h3>No info found</h3>
+}
+else
+{
+    <h3>Searching...</h3>
+}
+
+@code {
+    private string ?authorsFormated;
+    private string ?isbn;
+    private TitleDto ?titles;
+    private bool noData = true;
+
+    //search for isbn using GatTitleAsync method
+    async Task SearchIsbn()
+    {
+        noData = false;
+
+        titles = await _TitleApi.GetTitleAsync(isbn);
+
+        if(titles == null)
+        {
+            noData = true;
+        }
+        else
+        {
+            //format for multible authers
+            authorsFormated = "";
+            if (titles.Authors.Count < 1)
+            {
+                foreach (var auther in titles.Authors)
+                {
+                    authorsFormated += auther + ", ";
+                }
+            }
+            else
+            {
+                authorsFormated = titles.Authors[0];
+            }
+        }
+    }
+}
